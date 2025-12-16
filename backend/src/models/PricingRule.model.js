@@ -8,7 +8,7 @@ const pricingRuleSchema = new mongoose.Schema(
     },
     ruleType: {
       type: String,
-      enum: ["peak_hour", "weekend", "indoor", "equipment", "coach"],
+      enum: ["base", "peak_hour", "weekend", "indoor", "equipment", "coach"],
       required: true,
     },
     valueType: {
