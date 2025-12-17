@@ -3,6 +3,8 @@ import Court from "../models/Court.model.js";
 import Coach from "../models/Coach.model.js";
 import Equipment from "../models/Equipment.model.js";
 
+// courts 
+
 export const courtAvalibilityController = async (req, res) => {
   try {
     const { date, startTime, endTime } = req.query;
@@ -27,6 +29,8 @@ export const courtAvalibilityController = async (req, res) => {
       _id: { $nin: bookedCourtIds },
     });
 
+    // console.log(avalibleCourts);
+
     res.status(200).json({ avalibleCourts: avalibleCourts });
   } catch (error) {
     console.log(error);
@@ -34,71 +38,81 @@ export const courtAvalibilityController = async (req, res) => {
   }
 };
 
+// coaches
+
 export const coachAvalibilityController = async (req, res) => {
   try {
     const { date, startTime, endTime } = req.query;
 
     if (!date || !startTime || !endTime) {
-      res.status(400).json({
-        message: "Date, Start Time and End Time are required!",
+      return res.status(400).json({
+        message: "date, startTime, endTime are required",
       });
     }
 
     const conflictingBookings = await Booking.find({
       date,
       status: "confirmed",
-      coachId: { $ne: null },
+      coach: { $ne: null },
       startTime: { $lt: endTime },
       endTime: { $gt: startTime },
-    }).select("coachId");
+    }).select("coach");
 
-    const bookedCoachIds = conflictingBookings.map((booked) => booked.coachId);
+    const bookedCoachIds = conflictingBookings.map((b) => b.coach);
 
-    const avalibleCoaches = await Coach.find({
+    const availableCoaches = await Coach.find({
       isActive: true,
       _id: { $nin: bookedCoachIds },
     });
 
-    res.status(200).json({
-      avalibleCoaches: avalibleCoaches,
-    });
+    // console.log(availableCoaches);
+
+    return res.json({ availableCoaches });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Internal Server Error!",
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
     });
   }
 };
+
+// equipment
 
 export const equipmentAvalibilityController = async (req, res) => {
   try {
     const { date, startTime, endTime } = req.query;
 
     if (!date || !startTime || !endTime) {
-      res.status(400).json({
-        message: "Date, StartTime and EndTime are required!",
+      return res.status(400).json({
+        message: "date, startTime, endTime are required",
       });
     }
 
-    const conflictingBookings = await Booking.find({
+    const bookings = await Booking.find({
       date,
       status: "confirmed",
-      startTime: { $lt: endTime },
-      endTime: { $gt: startTime },
-    }).select("equipment");
+      $expr: {
+        $and: [
+          { $lt: ["$startTime", endTime] },
+          { $gt: ["$endTime", startTime] },
+        ],
+      },
+    });
 
     const bookedMap = {};
 
-    conflictingBookings.forEach((booking) => {
-      bookedMap.equipment.forEach((item) => {
-        const key = item.equipmentId.toString();
-        bookedMap[key] = (bookedMap[key] || 0) + item.quantity;
+    bookings.forEach((b) => {
+      b.equipment.forEach((eq) => {
+        const id = eq.equipment.toString();
+        bookedMap[id] = (bookedMap[id] || 0) + eq.quantity;
       });
     });
 
-    const equipmentList = await Equipment.find({ isActive: true });
+    const allEquipment = await Equipment.find();
 
-    const response = equipmentList.map((eq) => {
+    // console.log(allEquipment);
+
+    const result = allEquipment.map((eq) => {
       const bookedQty = bookedMap[eq._id.toString()] || 0;
       const availableQty = Math.max(eq.totalQuantity - bookedQty, 0);
 
@@ -110,9 +124,13 @@ export const equipmentAvalibilityController = async (req, res) => {
       };
     });
 
-    res.json({ equipments: response });
+    return res.json({
+      equipment: result,
+    });
   } catch (error) {
-    console.error(err);
-    res.status(500).json({ message: "Internal Server error!" });
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };

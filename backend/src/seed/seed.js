@@ -29,10 +29,10 @@ const seed = async () => {
     });
 
     const courts = await Court.insertMany([
-      { name: "Delhi Yard", type: "indoor" },
-      { name: "Ahmedabad Yard", type: "indoor" },
-      { name: "Mumbai Yard", type: "outdoor" },
-      { name: "Benglure Yard", type: "outdoor" },
+      { name: "Delhi Yard", type: "indoor", pricePerHour: 1000 },
+      { name: "Ahmedabad Yard", type: "indoor", pricePerHour: 1000 },
+      { name: "Mumbai Yard", type: "outdoor", pricePerHour: 800 },
+      { name: "Benglure Yard", type: "outdoor", pricePerHour: 800 },
     ]);
 
     const equipment = await Equipment.insertMany([
@@ -41,52 +41,76 @@ const seed = async () => {
     ]);
 
     const coaches = await Coach.insertMany([
-      { name: "Nirav Kundariya" },
-      { name: "Harshil Soni" },
-      { name: "Jaymin Patel" },
+      { name: "Nirav Kundariya", feePerHour: 500 },
+      { name: "Harshil Soni", feePerHour: 600 },
+      { name: "Jaymin Patel", feePerHour: 700 },
     ]);
 
     const today = new Date().toISOString().split("T")[0];
 
     await PricingRule.insertMany([
       {
-        name: "Base Court Price",
-        ruleType: "base",
-        valueType: "flat",
-        value: 1000,
+        name: "indoor court Premium",
+        type: "court",
+        condition: {
+          courtType: "indoor",
+        },
+        modifierType: "flat",
+        modifierValue: 300,
+        isActive: true,
       },
-      {
-        name: "Indoor Court Premium",
-        ruleType: "indoor",
-        valueType: "flat",
-        value: 300,
-        conditions: { courtType: "indoor" },
-      },
+
       {
         name: "Peak Hour Pricing",
-        ruleType: "peak_hour",
-        valueType: "percentage",
-        value: 20,
-        conditions: { start: "18:00", end: "21:00" },
+        type: "time",
+        condition: {
+          startTime: "18:00",
+          endTime: "21:00",
+        },
+        modifierType: "percent",
+        modifierValue: 20,
+        isActive: true,
       },
+
       {
         name: "Weekend Pricing",
-        ruleType: "weekend",
-        valueType: "percentage",
-        value: 15,
+        type: "day",
+        condition: {
+          days: ["sat", "sun"],
+        },
+        modifierType: "percent",
+        modifierValue: 15,
+        isActive: true,
       },
+
       {
         name: "Coach Fee",
-        ruleType: "coach",
-        valueType: "flat",
-        value: 500,
+        type: "coach",
+        condition: {},
+        modifierType: "flat",
+        modifierValue: 0,
+        isActive: true,
+      },
+
+      {
+        name: "Racket Rent",
+        type: "equipment",
+        condition: {
+          equipmentId: equipment[0]._id,
+        },
+        modifierType: "flat",
+        modifierValue: 150,
+        isActive: true,
       },
       {
-        name: "Racket Fee",
-        ruleType: "equipment",
-        valueType: "flat",
-        value: 150,
-        conditions: { equipmentName: "Racket" },
+        name: "Shoes Rent",
+        type: "equipment",
+        condition: {
+          equipmentId: equipment[1]._id,
+        },
+        modifierType: "flat",
+        modifierValue: 100,
+        isActive: true,
       },
     ]);
 

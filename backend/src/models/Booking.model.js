@@ -1,55 +1,61 @@
 import mongoose from "mongoose";
 
-const bookingEquipmentSchema = new mongoose.Schema(
+const BookingSchema = new mongoose.Schema(
   {
-    equipmentId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "equipment",
+      ref: "User",
       required: true,
     },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-  },
-  { _id: false }
-);
 
-const bookingSchema = new mongoose.Schema(
-  {
-    userId: {
+    court: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "Court",
       required: true,
     },
-    courtId: {
+
+    coach: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "court",
-      required: true,
-    },
-    coachId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "coach",
+      ref: "Coach",
       default: null,
     },
+
+    equipment: [
+      {
+        equipment: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Equipment",
+        },
+        quantity: Number,
+      },
+    ],
+
     date: {
-      type: String,
+      type: String, // "2025-12-28"
       required: true,
     },
+
     startTime: {
-      type: String,
+      type: String, // "18:00"
       required: true,
     },
+
     endTime: {
-      type: String,
+      type: String, // "20:00"
       required: true,
     },
-    equipment: [bookingEquipmentSchema],
-    totalPrice: {
-      type: Number,
-      required: true,
+
+    pricing: {
+      basePrice: Number,
+      modifiers: [
+        {
+          name: String,
+          amount: Number,
+        },
+      ],
+      totalPrice: Number,
     },
+
     status: {
       type: String,
       enum: ["confirmed", "cancelled"],
@@ -59,6 +65,4 @@ const bookingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Booking = mongoose.model("booking", bookingSchema);
-
-export default Booking;
+export default mongoose.model("Booking", BookingSchema);

@@ -11,6 +11,10 @@ const courtSchema = new mongoose.Schema(
       enum: ["indoor", "outdoor"],
       required: true,
     },
+    pricePerHour: {
+      type: Number,
+      required: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
